@@ -1,0 +1,26 @@
+# Node / Next.js
+node_modules/
+.next/
+out/
+# Java / Spring Boot
+target/
+build/
+.gradle/
+*.class
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+# Data (never commit raw city downloads)
+raw/
+pipeline/raw/
+*.csv
+*.parquet
+# Env & editors
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/

@@ -235,17 +235,24 @@ def _upsert_unregistered_buildings(conn: psycopg.Connection, run: ImportRun, row
 
 
 def _refresh_locations(conn: psycopg.Connection, run: ImportRun) -> None:
-    """Building location and ward name = those on its most recent evaluation that has coordinates."""
+    """Location = that on the most recent evaluation with coordinates; ward name = the most
+    recent one published. Kept separate: many evaluations have a ward but no coordinates."""
     conn.execute(
         """UPDATE buildings b
-           SET latitude = l.latitude, longitude = l.longitude, ward_name = coalesce(l.ward_name, b.ward_name),
+           SET latitude = l.latitude, longitude = l.longitude,
                geom = ST_SetSRID(ST_MakePoint(l.longitude, l.latitude), 4326)::geography,
                updated_import_id = %s, updated_at = now()
-           FROM (SELECT DISTINCT ON (building_id) building_id, latitude, longitude, ward_name
+           FROM (SELECT DISTINCT ON (building_id) building_id, latitude, longitude
                  FROM evaluations WHERE latitude IS NOT NULL
                  ORDER BY building_id, evaluation_date DESC, scoring_version DESC) l
-           WHERE b.id = l.building_id
-             AND (b.latitude, b.longitude, b.ward_name)
-                 IS DISTINCT FROM (l.latitude, l.longitude, coalesce(l.ward_name, b.ward_name))""",
+           WHERE b.id = l.building_id AND (b.latitude, b.longitude) IS DISTINCT FROM (l.latitude, l.longitude)""",
+        (run.id,),
+    )
+    conn.execute(
+        """UPDATE buildings b SET ward_name = w.ward_name, updated_import_id = %s, updated_at = now()
+           FROM (SELECT DISTINCT ON (building_id) building_id, ward_name
+                 FROM evaluations WHERE ward_name IS NOT NULL
+                 ORDER BY building_id, evaluation_date DESC, scoring_version DESC) w
+           WHERE b.id = w.building_id AND b.ward_name IS DISTINCT FROM w.ward_name""",
         (run.id,),
     )

@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    url: ${LEASELENS_TEST_DB_URL:jdbc:postgresql://localhost:5432/leaselens_api_test}
+  flyway:
+    clean-disabled: false   # tests rebuild the schema from scratch; never enable this outside tests

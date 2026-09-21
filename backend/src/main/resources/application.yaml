@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: leaselens-backend
+  datasource:
+    # Defaults match a local Postgres.app install (trust auth for the macOS user).
+    url: ${LEASELENS_DB_URL:jdbc:postgresql://localhost:5432/leaselens}
+    username: ${LEASELENS_DB_USER:${USER:postgres}}
+    password: ${LEASELENS_DB_PASSWORD:}
+  flyway:
+    # Migrations come from ../database/migrations (copied onto the classpath by the build).
+    locations: classpath:db/migration
+  mvc:
+    problemdetails:
+      enabled: true
+  jackson:
+    default-property-inclusion: always
+
+server:
+  error:
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+leaselens:
+  cors:
+    allowed-origins: ${LEASELENS_CORS_ORIGINS:http://localhost:3000}
+  search:
+    max-results: 20

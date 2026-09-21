@@ -1,6 +1,5 @@
 """Command line entry point.
 
-    leaselens-pipeline migrate            apply database/migrations
     leaselens-pipeline import rentsafe    download + load registration and both evaluation files
     leaselens-pipeline report             data-quality summary of what is loaded (Markdown)
 """
@@ -10,7 +9,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from .db import REPO_ROOT, connect, migrate
+from .db import REPO_ROOT, SchemaNotReady, check_schema, connect
 from .download.fetch import SOURCES, fetch
 from .loading.evaluations import load_evaluations
 from .loading.registration import load_registration
@@ -25,7 +24,6 @@ RENTSAFE = [("registration", load_registration),
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="leaselens-pipeline")
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("migrate")
     imp = sub.add_parser("import")
     imp.add_argument("group", choices=["rentsafe"])
     imp.add_argument("--raw-dir", type=Path, default=REPO_ROOT / "raw")
@@ -33,15 +31,15 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     conn = connect()
-    if args.command == "migrate":
-        applied = migrate(conn)
-        print("applied: " + (", ".join(applied) if applied else "nothing (up to date)"))
-        return 0
+    try:
+        check_schema(conn)
+    except SchemaNotReady as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
     if args.command == "report":
         print(quality_report(conn))
         return 0
 
-    migrate(conn)
     failed = False
     for key, loader in RENTSAFE:
         result = loader(conn, fetch(SOURCES[key], args.raw_dir))

@@ -6,7 +6,7 @@ from pathlib import Path
 import psycopg
 import pytest
 
-from leaselens_pipeline.db import migrate
+from leaselens_pipeline.db import migration_files
 from leaselens_pipeline.download.fetch import SOURCES, RawFile
 
 TEST_URL = os.environ.get("TEST_DATABASE_URL", "postgresql://localhost:5432/leaselens_test")
@@ -31,7 +31,8 @@ def conn(test_db_url):
     with psycopg.connect(test_db_url, autocommit=True) as c:
         c.execute("DROP SCHEMA public CASCADE")
         c.execute("CREATE SCHEMA public")
-        migrate(c)
+        for _, path in migration_files():   # what Flyway would apply, without needing the JVM
+            c.execute(path.read_text())
         yield c
 
 

@@ -1,0 +1,31 @@
+{
+  "_comment": "Shared contract for address normalization. Used by pipeline/tests (Python) and, from Week 3, backend tests (Java). Every input here appears in City data or is a plausible user query.",
+  "cases": [
+    {"input": "123 Bloor Street West",     "key": "123|BLOOR|ST|W",               "keys": ["123|BLOOR|ST|W"]},
+    {"input": "123 BLOOR ST W",            "key": "123|BLOOR|ST|W",               "keys": ["123|BLOOR|ST|W"]},
+    {"input": "123 Bloor St. W.",          "key": "123|BLOOR|ST|W",               "keys": ["123|BLOOR|ST|W"]},
+    {"input": "2727 VICTORIA PARK AVE",    "key": "2727|VICTORIA PARK|AVE|",      "keys": ["2727|VICTORIA PARK|AVE|"]},
+    {"input": "181-183  GERRARD ST E ",    "key": "181|GERRARD|ST|E",             "keys": ["181|GERRARD|ST|E", "183|GERRARD|ST|E"]},
+    {"input": "85-95 THORNCLIFFE PARK DR", "key": "85|THORNCLIFFE PARK|DR|",      "keys": ["85|THORNCLIFFE PARK|DR|", "87|THORNCLIFFE PARK|DR|", "89|THORNCLIFFE PARK|DR|", "91|THORNCLIFFE PARK|DR|", "93|THORNCLIFFE PARK|DR|", "95|THORNCLIFFE PARK|DR|"]},
+    {"input": "182-250 BRENYON WAY",       "key": "182|BRENYON|WAY|",             "keys": ["182|BRENYON|WAY|", "250|BRENYON|WAY|"]},
+    {"input": "145 ST GEORGE ST",          "key": "145|ST GEORGE|ST|",            "keys": ["145|ST GEORGE|ST|"]},
+    {"input": "1095 ST CLAIR AVE W",       "key": "1095|ST CLAIR|AVE|W",          "keys": ["1095|ST CLAIR|AVE|W"]},
+    {"input": "1 ST STEVENS CRT",          "key": "1|ST STEVENS|CRT|",            "keys": ["1|ST STEVENS|CRT|"]},
+    {"input": "289 THE KINGSWAY",          "key": "289|THE KINGSWAY||",           "keys": ["289|THE KINGSWAY||"]},
+    {"input": "40 LOWER RIVER ST.",        "key": "40|LOWER RIVER|ST|",           "keys": ["40|LOWER RIVER|ST|"]},
+    {"input": "142 WELLESLEY STREET E",    "key": "142|WELLESLEY|ST|E",           "keys": ["142|WELLESLEY|ST|E"]},
+    {"input": "245 C HOWLAND AVE",         "key": "245C|HOWLAND|AVE|",            "keys": ["245C|HOWLAND|AVE|"]},
+    {"input": "1 A BANSLEY AVE",           "key": "1A|BANSLEY|AVE|",              "keys": ["1A|BANSLEY|AVE|"]},
+    {"input": "100 UNITY RD",              "key": "100|UNITY|RD|",                "keys": ["100|UNITY|RD|"]},
+    {"input": "33 FLAMBOROUGH DR UNIT B",  "key": "33|FLAMBOROUGH|DR|",           "keys": ["33|FLAMBOROUGH|DR|"], "designator": "B"},
+    {"input": "33 FLAMBOROUGH DR - BLDG A","key": "33|FLAMBOROUGH|DR|",           "keys": ["33|FLAMBOROUGH|DR|"], "designator": "A"},
+    {"input": "70 WILSON PARK RD--CLOSED", "key": "70|WILSON PARK|RD|",           "keys": ["70|WILSON PARK|RD|"], "flags": ["closed"]},
+    {"input": "18 TRETTI WAY - WARD 06",   "key": "18|TRETTI|WAY|",               "keys": ["18|TRETTI|WAY|"], "flags": ["annotation"]},
+    {"input": "208 VAUGHAN RD <<ROLL# CHG>>", "key": "208|VAUGHAN|RD|",           "keys": ["208|VAUGHAN|RD|"], "flags": ["annotation"]},
+    {"input": "** CREATED IN ERROR ** 399 THE WEST MALL", "key": "399|THE WEST|MALL|", "keys": ["399|THE WEST|MALL|"], "flags": ["created_in_error"]},
+    {"input": "12-14 THIRTY NINTH ST",     "key": "12|THIRTY NINTH|ST|",          "keys": ["12|THIRTY NINTH|ST|", "14|THIRTY NINTH|ST|"]},
+    {"input": "60 THE DONWAY E",           "key": "60|THE DONWAY||E",             "keys": ["60|THE DONWAY||E"]},
+    {"input": "10 QUEENS QUAY W",          "key": "10|QUEENS|QUAY|W",             "keys": ["10|QUEENS|QUAY|W"]}
+  ],
+  "invalid": ["BLOOR ST W", "", "123", "95-85 MAIN ST"]
+}

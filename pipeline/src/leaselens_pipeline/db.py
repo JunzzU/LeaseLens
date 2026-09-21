@@ -1,8 +1,8 @@
-"""Database connection and schema migrations.
+"""Database connection and schema check.
 
-Migrations are the plain SQL files in database/migrations, applied in version order
-and recorded in schema_migrations. The Spring Boot backend is expected to take this
-over with Flyway (same file naming) in Week 3.
+The schema is owned by Flyway in the Spring Boot backend, which applies the files in
+database/migrations when it starts. The pipeline never changes the schema; it only
+checks that the migrations it was written against have been applied.
 """
 from __future__ import annotations
 
@@ -17,6 +17,10 @@ MIGRATIONS = REPO_ROOT / "database" / "migrations"
 DEFAULT_URL = "postgresql://localhost:5432/leaselens"
 
 
+class SchemaNotReady(Exception):
+    pass
+
+
 def database_url() -> str:
     return os.environ.get("DATABASE_URL", DEFAULT_URL)
 
@@ -26,20 +30,18 @@ def connect(url: str | None = None) -> psycopg.Connection:
     return psycopg.connect(url or database_url(), autocommit=True)
 
 
-def migrate(conn: psycopg.Connection) -> list[str]:
-    conn.execute("""CREATE TABLE IF NOT EXISTS schema_migrations (
-                        version integer PRIMARY KEY,
-                        filename text NOT NULL,
-                        applied_at timestamptz NOT NULL DEFAULT now())""")
-    applied = {v for (v,) in conn.execute("SELECT version FROM schema_migrations")}
-    done = []
-    for path in sorted(MIGRATIONS.glob("V*__*.sql"), key=lambda p: int(re.match(r"V(\d+)__", p.name)[1])):
-        version = int(re.match(r"V(\d+)__", path.name)[1])
-        if version in applied:
-            continue
-        with conn.transaction():
-            conn.execute(path.read_text())
-            conn.execute("INSERT INTO schema_migrations (version, filename) VALUES (%s, %s)",
-                         (version, path.name))
-        done.append(path.name)
-    return done
+def migration_files() -> list[tuple[int, Path]]:
+    files = [(int(re.match(r"V(\d+)__", p.name)[1]), p) for p in MIGRATIONS.glob("V*__*.sql")]
+    return sorted(files)
+
+
+def check_schema(conn: psycopg.Connection) -> None:
+    expected = migration_files()[-1][0]
+    has_history = conn.execute("SELECT to_regclass('flyway_schema_history') IS NOT NULL").fetchone()[0]
+    applied = conn.execute(
+        "SELECT max(version::int) FROM flyway_schema_history WHERE success AND version IS NOT NULL"
+    ).fetchone()[0] if has_history else None
+    if applied is None or applied < expected:
+        raise SchemaNotReady(
+            f"database schema is at version {applied or 'none'}, expected {expected}. "
+            "Start the backend once to apply migrations: cd backend && ./mvnw spring-boot:run")

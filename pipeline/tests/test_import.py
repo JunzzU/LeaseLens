@@ -56,6 +56,15 @@ def test_building_details_and_location(conn, raw_file):
                         ).fetchone() == (False,)
 
 
+def test_ward_name_does_not_depend_on_coordinates(conn, raw_file):
+    load_registration(conn, raw_file("registration", REGISTRATION))
+    load_evaluations(conn, raw_file("evaluations_v2023", [
+        v2023_row("1003", "145 ST GEORGE ST", "2025-01-01", "90", lat="", lon="")]))
+
+    assert conn.execute("SELECT ward_name, geom IS NULL FROM buildings WHERE source_building_id = '1003'"
+                        ).fetchone() == ("Toronto Centre", True)
+
+
 def test_new_and_revised_evaluations_are_recorded_as_changes(conn, raw_file):
     load_registration(conn, raw_file("registration", REGISTRATION))
     load_evaluations(conn, raw_file("evaluations_v2023", EVALUATIONS))

@@ -8,7 +8,9 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,10 +26,15 @@ public class BuildingController {
 
     private final BuildingSearchService search;
     private final BuildingService buildings;
+    private final ComparisonService comparisons;
+    private final TimelineRepository timeline;
 
-    public BuildingController(BuildingSearchService search, BuildingService buildings) {
+    public BuildingController(BuildingSearchService search, BuildingService buildings,
+                              ComparisonService comparisons, TimelineRepository timeline) {
         this.search = search;
         this.buildings = buildings;
+        this.comparisons = comparisons;
+        this.timeline = timeline;
     }
 
     @GetMapping("/search")
@@ -63,6 +70,30 @@ public class BuildingController {
             default -> null;
         };
         return buildings.permits(id, listing, limit, offset);
+    }
+
+    @GetMapping("/{id}/timeline")
+    @Operation(summary = "Evaluations and permit milestones in one list, newest first",
+            description = "Each permit contributes up to three events: applied, issued and closed.")
+    public TimelineEvent.Page timeline(
+            @PathVariable long id,
+            @Parameter(description = "Event types to include; all when omitted")
+            @RequestParam(required = false) Set<TimelineEvent.Type> types,
+            @RequestParam(defaultValue = "50") @Min(1) @Max(200) int limit,
+            @RequestParam(defaultValue = "0") @Min(0) int offset) {
+        buildings.requireExists(id);
+        Set<TimelineEvent.Type> wanted = types == null || types.isEmpty()
+                ? EnumSet.allOf(TimelineEvent.Type.class) : EnumSet.copyOf(types);
+        return new TimelineEvent.Page(timeline.count(id, wanted), limit, offset,
+                timeline.find(id, wanted, limit, offset));
+    }
+
+    @GetMapping("/{id}/comparison")
+    @Operation(summary = "How the latest evaluation compares with similar buildings",
+            description = "Peers are chosen by the first rule that yields at least 15 buildings. The rule, group "
+                    + "size and spread are always returned; the percentile only when the group is large enough.")
+    public Comparison comparison(@PathVariable long id) {
+        return comparisons.compare(id);
     }
 
     @GetMapping("/{id}/evaluations")

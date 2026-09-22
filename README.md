@@ -2,7 +2,9 @@
 
 Look up a Toronto apartment building before you sign a lease: RentSafeTO evaluation history, building permits, and a unified timeline, built from City of Toronto open data with the source and freshness of every record shown.
 
-**Status:** Week 4 — building profiles with permit records. City building permits are matched to RentSafeTO buildings by address, with the evidence and confidence of every match stored. See [`docs/matching-methodology.md`](docs/matching-methodology.md), [`docs/data-quality-week4.md`](docs/data-quality-week4.md) and the Week 1 [`docs/data-audit.md`](docs/data-audit.md).
+**Status:** Week 5 — MVP backend complete: search, building profiles, evaluations, permits, a unified timeline, transparent comparisons with similar buildings, and data-source freshness. Next: the website (Weeks 6–7).
+
+Docs: [matching](docs/matching-methodology.md) · [comparison](docs/comparison-methodology.md) · [limitations](docs/limitations.md) · [data quality](docs/data-quality-week4.md) · [Week 1 audit](docs/data-audit.md)
 
 The website comes first; a mobile app follows. All business logic lives in the API so both clients share it.
 
@@ -46,6 +48,9 @@ Raw files are kept untouched under `raw/<dataset>/<date>/` (gitignored; ~230 MB 
 | `GET /api/v1/buildings/{id}` | Profile: details, evaluation summary (change is only computed within one scoring version), permit counts, coverage-note codes, source freshness |
 | `GET /api/v1/buildings/{id}/evaluations` | All evaluations, newest first |
 | `GET /api/v1/buildings/{id}/permits?status=active\|cleared\|all&limit=&offset=` | Attached permits, newest activity first, each with match evidence, `workCategory` and `predatesBuilding` |
+| `GET /api/v1/buildings/{id}/timeline?types=&limit=&offset=` | Evaluations and permit milestones (applied, issued, closed) in one list, newest first |
+| `GET /api/v1/buildings/{id}/comparison` | Latest 2023+ score against similar buildings: the rule used, peer count, spread and percentile (withheld below 15 peers), plus permit activity |
+| `GET /api/v1/data-sources/status` | Each dataset's portal page, last successful import, last attempt and licence text |
 | `GET /v3/api-docs` | OpenAPI 3.1 description, used to generate client types for the website and the app |
 
 Errors are RFC 9457 problem details. `/api/v1` changes are additive only, because installed app versions can't be forced to update.

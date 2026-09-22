@@ -64,6 +64,10 @@ public class BuildingService {
                 permits.find(id, listing, limit, offset));
     }
 
+    public void requireExists(long id) {
+        repository.findBuilding(id).orElseThrow(() -> new NotFoundException("building", id));
+    }
+
     public List<EvaluationRecord> evaluations(long id) {
         repository.findBuilding(id).orElseThrow(() -> new NotFoundException("building", id));
         return repository.findEvaluations(id);

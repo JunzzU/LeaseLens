@@ -67,3 +67,26 @@ INSERT INTO permit_matches (permit_id, building_id, match_method, match_confiden
   (4, 1, 'ADDRESS', 'MEDIUM', 'OTHER_STRUCTURE_ON_SITE', true, '181 GERRARD ST E', '181 GERRARD ST E', 6),
   (5, 4, 'ADDRESS', 'LOW', 'BUILDING', false, '33 FLAMBOROUGH DR', '33 FLAMBOROUGH DR', 5),
   (5, 5, 'ADDRESS', 'LOW', 'BUILDING', false, '33 FLAMBOROUGH DR', '33 FLAMBOROUGH DR', 5);
+
+-- 20 comparison peers for building 1 (ward 13, 22 units, 4 storeys, latest V2023 score 84 on 2026-06-12):
+-- same ward, 20-24 units, 4 storeys, V2023 scores 70..89 within the 2-year window.
+INSERT INTO buildings (id, source_building_id, address, street_number_low, street_number_high, street_name,
+                       street_type, normalized_address, ward, ward_name, latitude, longitude, storeys, units,
+                       year_built, property_type, rentsafe_registered)
+OVERRIDING SYSTEM VALUE
+SELECT 100 + n, (2000 + n)::text, (100 + n) || ' PEER ST', 100 + n, 100 + n, 'PEER', 'ST', (100 + n) || '|PEER|ST|',
+       '13', 'Toronto Centre', 43.66, -79.37, 4, 20 + n % 5, 1960,
+       CASE WHEN n < 17 THEN 'PRIVATE' ELSE 'TCHC' END, true
+FROM generate_series(0, 19) AS n;
+
+INSERT INTO evaluations (building_id, scoring_version, evaluation_date, evaluation_score, raw_payload,
+                         created_import_id, updated_import_id)
+SELECT 100 + n, 'V2023', DATE '2025-06-01' + n, 70 + n, '{}', 3, 3 FROM generate_series(0, 19) AS n;
+
+-- A size-matched building whose only evaluation is outside the window: excluded, and counted as such.
+INSERT INTO buildings (id, source_building_id, address, street_number_low, street_number_high, street_name,
+                       street_type, normalized_address, ward, storeys, units, rentsafe_registered)
+OVERRIDING SYSTEM VALUE VALUES (200, '3000', '1 OLD ST', 1, 1, 'OLD', 'ST', '1|OLD|ST|', '13', 4, 22, true);
+INSERT INTO evaluations (building_id, scoring_version, evaluation_date, evaluation_score, raw_payload,
+                         created_import_id, updated_import_id)
+VALUES (200, 'V2023', '2023-07-01', 50, '{}', 3, 3);

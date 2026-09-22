@@ -3,6 +3,7 @@ package io.github.junzzu.leaselens.common;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import java.time.Clock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,12 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**").allowedOrigins(allowedOrigins).allowedMethods("GET");
+    }
+
+    /** Injected wherever "now" matters (data age, "last 5 years"), so tests can fix the date. */
+    @Bean
+    Clock clock() {
+        return Clock.systemDefaultZone();
     }
 
     @Bean

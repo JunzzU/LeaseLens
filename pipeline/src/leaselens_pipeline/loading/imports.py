@@ -31,6 +31,7 @@ class ImportResult:
     updated: int = 0
     unchanged: int = 0
     rejected: int = 0
+    skipped: int = 0
     warnings: dict = field(default_factory=dict)
     error: str | None = None
 
@@ -43,6 +44,8 @@ class ImportResult:
             f"Unchanged: {self.unchanged:,}",
             f"Rejected: {self.rejected:,}",
         ]
+        if self.skipped:
+            lines.append(f"Skipped (valid, but not for a RentSafeTO building): {self.skipped:,}")
         for kind, n in sorted(self.warnings.items()):
             lines.append(f"Warning: {kind}: {n}")
         if self.error:
@@ -102,20 +105,20 @@ class ImportRun:
             (building_id, entity_type, entity_id, change_type, summary, self.id),
         )
 
-    def complete(self, record_count: int, inserted: int, updated: int) -> ImportResult:
+    def complete(self, record_count: int, inserted: int, updated: int, skipped: int = 0) -> ImportResult:
         rejected = len(self.rejections)
-        unchanged = record_count - rejected - inserted - updated
+        unchanged = record_count - rejected - inserted - updated - skipped
         warnings = {**self.warnings, **{k: ", ".join(v) for k, v in self.schema_drift.items()}}
         status = "completed_with_warnings" if (warnings or rejected) else "completed"
         self.conn.execute(
             """UPDATE data_imports SET completed_at = now(), status = %s, record_count = %s,
                    inserted_count = %s, updated_count = %s, unchanged_count = %s, rejected_count = %s,
-                   warnings = %s
+                   skipped_count = %s, warnings = %s
                WHERE id = %s""",
-            (status, record_count, inserted, updated, unchanged, rejected, Jsonb(warnings), self.id),
+            (status, record_count, inserted, updated, unchanged, rejected, skipped, Jsonb(warnings), self.id),
         )
         return ImportResult(self.dataset, self.id, status, record_count, inserted, updated,
-                            unchanged, rejected, warnings)
+                            unchanged, rejected, skipped, warnings)
 
     def fail(self, error: Exception) -> ImportResult:
         msg = f"{type(error).__name__}: {error}"

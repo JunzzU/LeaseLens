@@ -2,7 +2,7 @@
 
 Look up a Toronto apartment building before you sign a lease: RentSafeTO evaluation history, building permits, and a unified timeline, built from City of Toronto open data with the source and freshness of every record shown.
 
-**Status:** Week 3 — searchable building API. Spring Boot serves address search and building profiles over the RentSafeTO data the Python pipeline loads. See [`docs/data-quality-week2.md`](docs/data-quality-week2.md) and the Week 1 [`docs/data-audit.md`](docs/data-audit.md).
+**Status:** Week 4 — building profiles with permit records. City building permits are matched to RentSafeTO buildings by address, with the evidence and confidence of every match stored. See [`docs/matching-methodology.md`](docs/matching-methodology.md), [`docs/data-quality-week4.md`](docs/data-quality-week4.md) and the Week 1 [`docs/data-audit.md`](docs/data-audit.md).
 
 The website comes first; a mobile app follows. All business logic lives in the API so both clients share it.
 
@@ -28,7 +28,7 @@ pipeline/.venv/bin/pip install -e "pipeline[dev]"
    ```
 2. **Load the data** (in another terminal). The pipeline checks the schema is current and refuses to run otherwise.
    ```bash
-   pipeline/.venv/bin/leaselens-pipeline import rentsafe   # download + load; safe to rerun
+   pipeline/.venv/bin/leaselens-pipeline import all        # RentSafeTO, then permits (~15 s); safe to rerun
    pipeline/.venv/bin/leaselens-pipeline report            # data-quality summary (Markdown)
    ```
 3. **Try it:** http://localhost:8080/swagger-ui.html, or
@@ -36,15 +36,16 @@ pipeline/.venv/bin/pip install -e "pipeline[dev]"
    curl "http://localhost:8080/api/v1/buildings/search?q=181+gerrard+st+e"
    ```
 
-Raw files are kept untouched under `raw/<dataset>/<date>/` (gitignored). Configuration is via environment variables: `DATABASE_URL` (pipeline), `LEASELENS_DB_URL` / `LEASELENS_DB_USER` / `LEASELENS_DB_PASSWORD` and `LEASELENS_CORS_ORIGINS` (backend).
+Raw files are kept untouched under `raw/<dataset>/<date>/` (gitignored; ~230 MB with permits). Configuration is via environment variables: `DATABASE_URL` (pipeline), `LEASELENS_DB_URL` / `LEASELENS_DB_USER` / `LEASELENS_DB_PASSWORD` and `LEASELENS_CORS_ORIGINS` (backend).
 
 ## API (v1)
 
 | Endpoint | Returns |
 |---|---|
 | `GET /api/v1/buildings/search?q=&limit=` | Candidate buildings plus `matchType` (`ADDRESS`, `PREFIX`, `STREET`, `FUZZY`, `NONE`) and `ambiguous`. Never a silent single guess. |
-| `GET /api/v1/buildings/{id}` | Profile: details, evaluation summary (change is only computed within one scoring version), coverage-note codes, source freshness |
+| `GET /api/v1/buildings/{id}` | Profile: details, evaluation summary (change is only computed within one scoring version), permit counts, coverage-note codes, source freshness |
 | `GET /api/v1/buildings/{id}/evaluations` | All evaluations, newest first |
+| `GET /api/v1/buildings/{id}/permits?status=active\|cleared\|all&limit=&offset=` | Attached permits, newest activity first, each with match evidence, `workCategory` and `predatesBuilding` |
 | `GET /v3/api-docs` | OpenAPI 3.1 description, used to generate client types for the website and the app |
 
 Errors are RFC 9457 problem details. `/api/v1` changes are additive only, because installed app versions can't be forced to update.

@@ -16,9 +16,11 @@ import org.springframework.stereotype.Service;
 public class BuildingService {
 
     private final BuildingRepository repository;
+    private final PermitRepository permits;
 
-    public BuildingService(BuildingRepository repository) {
+    public BuildingService(BuildingRepository repository, PermitRepository permits) {
         this.repository = repository;
+        this.permits = permits;
     }
 
     public BuildingSummary summary(long id) {
@@ -40,14 +42,26 @@ public class BuildingService {
         if (repository.sharesAddressWithAnotherBuilding(id)) {
             notes.add(CoverageNote.ADDRESS_SHARED_WITH_OTHER_BUILDING);
         }
+        if (permits.hasUnattachedSharedAddressPermits(id)) {
+            notes.add(CoverageNote.SOME_PERMITS_NOT_ATTACHED);
+        }
         if (b.location() == null) {
             notes.add(CoverageNote.NO_LOCATION);
         }
 
         return new BuildingSummary(b.id(), b.rsn(), b.address(), repository.findAliases(id), b.postalFsa(), b.ward(),
                 b.wardName(), b.location(), b.storeys(), b.units(), b.yearBuilt(), b.yearRegistered(),
-                b.propertyType(), b.rentSafeRegistered(), evalSummary, List.copyOf(notes),
+                b.propertyType(), b.rentSafeRegistered(), evalSummary, permits.summarize(id), List.copyOf(notes),
                 repository.findSourceFreshness());
+    }
+
+    public PermitRecord.Page permits(long id, PermitRecord.Listing listing, int limit, int offset) {
+        repository.findBuilding(id).orElseThrow(() -> new NotFoundException("building", id));
+        BuildingSummary.PermitSummary counts = permits.summarize(id);
+        int total = listing == null ? counts.active() + counts.cleared()
+                : listing == PermitRecord.Listing.ACTIVE ? counts.active() : counts.cleared();
+        return new PermitRecord.Page(total, counts.active(), counts.cleared(), limit, offset,
+                permits.find(id, listing, limit, offset));
     }
 
     public List<EvaluationRecord> evaluations(long id) {

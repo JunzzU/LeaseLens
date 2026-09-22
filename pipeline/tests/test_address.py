@@ -31,3 +31,25 @@ def test_spellings_converge():
 def test_display_is_readable():
     assert parse("181-183  GERRARD ST E ").display() == "181-183 GERRARD ST E"
     assert parse("245 C HOWLAND AVE").display() == "245C HOWLAND AVE"
+
+
+def test_permit_match_keys():
+    from leaselens_pipeline.normalization.address import permit_match_keys
+    assert permit_match_keys("181", "GERRARD", "ST", "E") == [("181|GERRARD ST|E", False)]
+    assert permit_match_keys("140", "THE ESPLANADE", "", " ") == [("140|THE ESPLANADE|", False)]
+    assert permit_match_keys("58 A", "MAIN", "STREET", "") == [("58A|MAIN ST|", False)]
+    assert permit_match_keys("273-277", "KING", "ST", "W") == [
+        ("273|KING ST|W", True), ("275|KING ST|W", True), ("277|KING ST|W", True)]
+    assert permit_match_keys("359 1/2", "QUEEN", "ST", "W") == []
+    assert permit_match_keys("", "QUEEN", "ST", "W") == []
+
+
+def test_permit_and_registration_keys_agree():
+    """A building alias and a permit for the same place produce the same match key."""
+    from leaselens_pipeline.normalization.address import permit_match_keys
+    for raw, fields in [("339 THE WEST MALL", ("339", "THE WEST MALL", "", "")),
+                        ("10 QUEENS QUAY W", ("10", "QUEENS QUAY", "", "W")),
+                        ("245 C HOWLAND AVE", ("245 C", "HOWLAND", "AVE", ""))]:
+        a = parse(raw)
+        alias_key = f"{a.number_low}{a.suffix}|{' '.join(p for p in (a.street_name, a.street_type) if p)}|{a.direction}"
+        assert permit_match_keys(*fields)[0][0] == alias_key

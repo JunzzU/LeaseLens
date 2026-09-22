@@ -147,7 +147,7 @@ class BuildingApiTest {
     @Test
     void profileShowsFreshnessOfTheLatestSuccessfulImportOnly() {
         assertThat(mvc.get().uri("/api/v1/buildings/1")).bodyJson()
-                .hasPathSatisfying("$.sources.length()", v -> v.assertThat().isEqualTo(3))
+                .hasPathSatisfying("$.sources.length()", v -> v.assertThat().isEqualTo(5))
                 .hasPathSatisfying("$.sources[?(@.dataset == 'evaluations_v2023')].sourceVersion",
                         v -> v.assertThat().asList().containsExactly("2026-09-21T09:34:52"));
     }
@@ -168,6 +168,50 @@ class BuildingApiTest {
         assertThat(mvc.get().uri("/api/v1/buildings/4")).bodyJson()
                 .hasPathSatisfying("$.coverageNotes", v -> v.assertThat().asList()
                         .contains("ADDRESS_SHARED_WITH_OTHER_BUILDING"));
+    }
+
+    @Test
+    void profileSummarizesAttachedPermits() {
+        assertThat(mvc.get().uri("/api/v1/buildings/1")).bodyJson()
+                .hasPathSatisfying("$.permits.active", v -> v.assertThat().isEqualTo(2))
+                .hasPathSatisfying("$.permits.cleared", v -> v.assertThat().isEqualTo(2))
+                .hasPathSatisfying("$.permits.activeNewConstructionOrDemolition", v -> v.assertThat().isEqualTo(1))
+                .hasPathSatisfying("$.permits.latestActivity", v -> v.assertThat().isEqualTo("2026-06-12"));
+    }
+
+    @Test
+    void permitsNewestFirstWithMatchEvidence() {
+        assertThat(mvc.get().uri("/api/v1/buildings/1/permits")).hasStatusOk().bodyJson()
+                .hasPathSatisfying("$.total", v -> v.assertThat().isEqualTo(4))
+                .hasPathSatisfying("$.permits[*].permitNumber", v -> v.assertThat().asList().containsExactly(
+                        "26 100001 BLD", "25 100003 NEW", "24 100002 PLB", "99 100004 DEM"))
+                .hasPathSatisfying("$.permits[0].match.method", v -> v.assertThat().isEqualTo("ADDRESS"))
+                .hasPathSatisfying("$.permits[0].match.permitAddress", v -> v.assertThat().isEqualTo("183 GERRARD ST E"))
+                .hasPathSatisfying("$.permits[0].estimatedCost", v -> v.assertThat().isEqualTo(25000.00))
+                .hasPathSatisfying("$.permits[1].workCategory", v -> v.assertThat().isEqualTo("NEW_CONSTRUCTION"))
+                .hasPathSatisfying("$.permits[1].match.confidence", v -> v.assertThat().isEqualTo("MEDIUM"))
+                .hasPathSatisfying("$.permits[3].predatesBuilding", v -> v.assertThat().isEqualTo(true))
+                .hasPathSatisfying("$.permits[3].match.siteRelation", v -> v.assertThat().isEqualTo("OTHER_STRUCTURE_ON_SITE"));
+    }
+
+    @Test
+    void permitsFilterByStatusAndPage() {
+        assertThat(mvc.get().uri("/api/v1/buildings/1/permits?status=active")).bodyJson()
+                .hasPathSatisfying("$.total", v -> v.assertThat().isEqualTo(2))
+                .hasPathSatisfying("$.permits[*].listing", v -> v.assertThat().asList().containsOnly("ACTIVE"));
+        assertThat(mvc.get().uri("/api/v1/buildings/1/permits?status=cleared&limit=1&offset=1")).bodyJson()
+                .hasPathSatisfying("$.total", v -> v.assertThat().isEqualTo(2))
+                .hasPathSatisfying("$.permits[*].permitNumber", v -> v.assertThat().asList().containsExactly("99 100004 DEM"));
+        assertThat(mvc.get().uri("/api/v1/buildings/1/permits?status=open")).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(mvc.get().uri("/api/v1/buildings/999/permits")).hasStatus(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void permitsAtASharedAddressAreNotAttachedButAreFlagged() {
+        assertThat(mvc.get().uri("/api/v1/buildings/4/permits")).bodyJson()
+                .hasPathSatisfying("$.total", v -> v.assertThat().isEqualTo(0));
+        assertThat(mvc.get().uri("/api/v1/buildings/4")).bodyJson()
+                .hasPathSatisfying("$.coverageNotes", v -> v.assertThat().asList().contains("SOME_PERMITS_NOT_ATTACHED"));
     }
 
     @Test

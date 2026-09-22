@@ -28,6 +28,7 @@ public record BuildingSummary(
         @Schema(example = "PRIVATE", description = "PRIVATE, TCHC or SOCIAL HOUSING") String propertyType,
         boolean rentSafeRegistered,
         EvaluationSummary evaluations,
+        PermitSummary permits,
         List<CoverageNote> coverageNotes,
         List<SourceFreshness> sources) {
 
@@ -41,6 +42,14 @@ public record BuildingSummary(
             EvaluationPoint previous,
             @Schema(description = "latest.score - previous.score; null when there is no comparable previous")
             Integer changeFromPrevious) {}
+
+    public record PermitSummary(
+            @Schema(description = "Attached permits in the City's active-permits file") int active,
+            @Schema(description = "Attached permits that are closed, cancelled or completed") int cleared,
+            @Schema(description = "Active permits for new construction or demolition on the property")
+            int activeNewConstructionOrDemolition,
+            @Schema(description = "Most recent issued (else application) date among attached permits; null if none")
+            LocalDate latestActivity) {}
 
     public record EvaluationPoint(LocalDate date, Integer score, ScoringVersion scoringVersion) {}
 
@@ -60,6 +69,8 @@ public record BuildingSummary(
         SCORING_SYSTEM_CHANGED,
         /** Another registered building shares one of this building's addresses. */
         ADDRESS_SHARED_WITH_OTHER_BUILDING,
+        /** Some permits at this address were not attached because it is shared with another building. */
+        SOME_PERMITS_NOT_ATTACHED,
         NO_LOCATION
     }
 }

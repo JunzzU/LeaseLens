@@ -157,3 +157,30 @@ def expand_keys(addr: Address) -> list[str]:
 def key_to_text(key: str) -> str:
     """'181|GERRARD|ST|E' -> '181 GERRARD ST E' (the searchable form of a key)."""
     return " ".join(part for part in key.split("|") if part)
+
+
+_PERMIT_NUMBER = re.compile(r"^(\d+)\s?([A-Z])?(?:\s*-\s*(\d+)\s?([A-Z])?)?$")
+
+
+def match_key(number: str, street: str, direction: str) -> str:
+    """Key comparing the street as one string: '140|THE ESPLANADE|', '181|GERRARD ST|E'."""
+    return f"{number}|{street}|{direction}"
+
+
+def permit_match_keys(street_num: str, name: str, stype: str, direction: str) -> list[tuple[str, bool]]:
+    """Match keys for an address published as separate fields (building permits).
+
+    Returns (key, via_range) pairs; via_range marks keys that exist only because a
+    range like '273-275' was expanded. Numbers we can't interpret ('359 1/2') give [].
+    """
+    m = _PERMIT_NUMBER.match(re.sub(r"\s+", " ", (street_num or "").upper()).strip())
+    if not m or not name:
+        return []
+    low, suffix, high, _ = m.groups()
+    t = (stype or "").upper().strip()
+    street = " ".join(p for p in (re.sub(r"\s+", " ", name.upper()).strip(), STREET_TYPES.get(t, t)) if p)
+    d = DIRECTIONS.get((direction or "").upper().strip(), "")
+    addr = Address(int(low), int(high) if high else int(low), suffix or "", street, "", d)
+    if addr.number_high < addr.number_low:
+        return []
+    return [(match_key(k.split("|")[0], street, d), addr.is_range) for k in expand_keys(addr)]

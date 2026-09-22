@@ -66,3 +66,15 @@ def v2023_row(rsn, address, date, score, lat="43.66", lon="-79.37"):
             "WARDNAME": "Toronto Centre", "CONFIRMED STOREYS": "10", "CONFIRMED UNITS": "100",
             "YEAR BUILT": "1965", "YEAR REGISTERED": "2017", "PROPERTY TYPE": "PRIVATE",
             "LATITUDE": lat, "LONGITUDE": lon}
+
+
+def permit_row(num, street_num, street_name, street_type="AVE", direction="", status="Inspection",
+               permit_type="Building Additions/Alterations", structure="Apartment Building", **extra):
+    return {"_id": "1", "PERMIT_NUM": num, "REVISION_NUM": "0", "PERMIT_TYPE": permit_type,
+            "STRUCTURE_TYPE": structure, "WORK": "Balcony/Guard Repairs", "STREET_NUM": street_num,
+            "STREET_NAME": street_name, "STREET_TYPE": street_type, "STREET_DIRECTION": direction,
+            "POSTAL": "M5A", "GEO_ID": "123", "WARD_GRID": "S1", "APPLICATION_DATE": "2025-01-15",
+            "ISSUED_DATE": "2025-03-01", "COMPLETED_DATE": "", "STATUS": status,
+            "DESCRIPTION": "Balcony slab repairs", "CURRENT_USE": "Apartment", "PROPOSED_USE": "Apartment",
+            "DWELLING_UNITS_CREATED": "", "DWELLING_UNITS_LOST": "", "EST_CONST_COST": "25000",
+            "BUILDER_NAME": "JANE PRIVATEPERSON", **extra}

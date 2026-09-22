@@ -118,7 +118,8 @@ public class BuildingRepository {
                         SELECT DISTINCT ON (dataset_name) dataset_name, completed_at, source_version
                         FROM data_imports
                         WHERE status LIKE 'completed%' AND dataset_name IN
-                              ('registration', 'evaluations_pre2023', 'evaluations_v2023')
+                              ('registration', 'evaluations_pre2023', 'evaluations_v2023',
+                               'permits_active', 'permits_cleared')
                         ORDER BY dataset_name, id DESC""")
                 .query((rs, i) -> new SourceFreshness(rs.getString("dataset_name"),
                         rs.getObject("completed_at", OffsetDateTime.class), rs.getString("source_version")))

@@ -17,7 +17,7 @@ def quality_report(conn: psycopg.Connection) -> str:
 
     imports = q("""SELECT DISTINCT ON (dataset_name) dataset_name, id, status, source_version,
                           to_char(completed_at, 'YYYY-MM-DD HH24:MI'), record_count, inserted_count,
-                          updated_count, unchanged_count, rejected_count
+                          updated_count, unchanged_count, rejected_count, skipped_count
                    FROM data_imports WHERE status <> 'running' ORDER BY dataset_name, id DESC""")
     b = one("""SELECT count(*), count(*) FILTER (WHERE rentsafe_registered),
                       count(*) FILTER (WHERE NOT rentsafe_registered),
@@ -46,10 +46,23 @@ def quality_report(conn: psycopg.Connection) -> str:
     warnings = q("""SELECT DISTINCT ON (dataset_name) dataset_name, warnings FROM data_imports
                     WHERE status LIKE 'completed%' ORDER BY dataset_name, id DESC""")
 
+    matches = q("""SELECT match_method, match_confidence, site_relation, accepted, count(*),
+                          count(DISTINCT building_id)
+                   FROM permit_matches GROUP BY 1, 2, 3, 4 ORDER BY 4 DESC, 5 DESC""")
+    pb = one("""SELECT count(DISTINCT building_id) FILTER (WHERE accepted),
+                       (SELECT count(*) FROM buildings b
+                        WHERE NOT EXISTS (SELECT 1 FROM permit_matches m WHERE m.building_id = b.id)),
+                       count(DISTINCT permit_id) FILTER (WHERE accepted),
+                       count(DISTINCT permit_id) FILTER (WHERE NOT accepted)
+                FROM permit_matches""")
+    categories = q("""SELECT p.work_category, p.source_file, count(*) FROM permits p
+                      WHERE EXISTS (SELECT 1 FROM permit_matches m WHERE m.permit_id = p.id AND m.accepted)
+                      GROUP BY 1, 2 ORDER BY 1, 2""")
+
     parts = [
         "## Latest import per dataset",
         _table(["Dataset", "Import", "Status", "Source version", "Completed", "Records", "Inserted", "Updated",
-                "Unchanged", "Rejected"], imports),
+                "Unchanged", "Rejected", "Skipped"], imports),
         "## Buildings",
         _table(["Measure", "Count"], [
             ("Buildings", b[0]), ("Registered in RentSafeTO", b[1]),
@@ -63,6 +76,15 @@ def quality_report(conn: psycopg.Connection) -> str:
         _table(["Scoring version", "Evaluations", "Buildings", "First", "Latest", "Median score"], ev),
         f"Buildings evaluated under both scoring versions: {both:,}. Their scores are not comparable "
         "across versions, so trends are computed within one version only.",
+        "## Permits",
+        _table(["Measure", "Count"], [
+            ("Buildings with at least one attached permit", pb[0]),
+            ("Buildings with no candidate permit at all", pb[1]),
+            ("Permits attached to exactly one building", pb[2]),
+            ("Permits not attached: address shared by several buildings", pb[3]),
+        ]),
+        _table(["Method", "Confidence", "Site relation", "Attached", "Matches", "Buildings"], matches),
+        _table(["Work category", "File", "Attached permits"], categories),
         "## Rejected rows (latest import)",
         _table(["Dataset", "Reason", "Rows"], rejects) if rejects else "None.",
         "## Warnings (latest import)",

@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import org.springframework.validation.annotation.Validated;
@@ -43,6 +44,25 @@ public class BuildingController {
     @Operation(summary = "Building profile: details, evaluation summary, coverage notes and data freshness")
     public BuildingSummary summary(@PathVariable long id) {
         return buildings.summary(id);
+    }
+
+    @GetMapping("/{id}/permits")
+    @Operation(summary = "Building permits attached to a building, newest activity first",
+            description = "Only permits whose address matches this building and no other are returned. Each "
+                    + "carries its match evidence. Permits can indicate maintenance, renovation or construction; "
+                    + "they are not a judgement of the building.")
+    public PermitRecord.Page permits(
+            @PathVariable long id,
+            @Parameter(description = "active, cleared or all") @RequestParam(defaultValue = "all")
+            @Pattern(regexp = "active|cleared|all") String status,
+            @RequestParam(defaultValue = "50") @Min(1) @Max(200) int limit,
+            @RequestParam(defaultValue = "0") @Min(0) int offset) {
+        PermitRecord.Listing listing = switch (status) {
+            case "active" -> PermitRecord.Listing.ACTIVE;
+            case "cleared" -> PermitRecord.Listing.CLEARED;
+            default -> null;
+        };
+        return buildings.permits(id, listing, limit, offset);
     }
 
     @GetMapping("/{id}/evaluations")

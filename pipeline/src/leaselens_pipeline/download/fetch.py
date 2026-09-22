@@ -29,6 +29,8 @@ SOURCES = {
         Source("registration", "apartment-building-registration", "Apartment Building Registration Data.csv"),
         Source("evaluations_v2023", "apartment-building-evaluation", "Apartment Building Evaluations 2023 - current.csv"),
         Source("evaluations_pre2023", "apartment-building-evaluation", "Pre-2023 Apartment Building Evaluations.csv"),
+        Source("permits_active", "building-permits-active-permits", "building-permits-active-permits.csv"),
+        Source("permits_cleared", "building-permits-cleared-permits", "Cleared Building Permits since 2017.csv"),
     ]
 }
 

@@ -33,3 +33,37 @@ INSERT INTO evaluations (building_id, scoring_version, evaluation_date, evaluati
   (1, 'V2023',    '2026-06-12', 84, 84, 45, NULL, '{}', 3, 3),
   (2, 'PRE_2023', '2021-05-01', 88, NULL, 20, 'Evaluation needs to be conducted in 3 years', '{}', 2, 2),
   (2, 'V2023',    '2025-02-02', 93, 93, 47, NULL, '{}', 3, 3);
+
+INSERT INTO data_imports (id, dataset_name, source_url, source_version, raw_path, checksum, started_at, completed_at, status)
+OVERRIDING SYSTEM VALUE VALUES
+  (5, 'permits_active',  'test', '2026-09-21T10:25:31', 'raw/test', 'x', '2026-09-21 10:03+00', '2026-09-21 10:03+00', 'completed'),
+  (6, 'permits_cleared', 'test', '2026-09-21T11:19:35', 'raw/test', 'x', '2026-09-21 10:04+00', '2026-09-21 10:04+00', 'completed');
+
+INSERT INTO permits (id, permit_number, revision_number, permit_type, source_file, status, structure_type, work,
+                     work_category, description, application_date, issued_date, completed_date, est_const_cost,
+                     street_num, street_name, street_type, street_direction, raw_payload, created_import_id, updated_import_id)
+OVERRIDING SYSTEM VALUE VALUES
+  (1, '26 100001 BLD', '00', 'Building Additions/Alterations', 'ACTIVE', 'Inspection', 'Apartment Building',
+   'Balcony/Guard Repairs', 'ALTERATION_OR_REPAIR', 'Balcony slab repairs', '2026-04-01', '2026-06-12', NULL, 25000.00,
+   '183', 'GERRARD', 'ST', 'E', '{}', 5, 5),
+  (2, '24 100002 PLB', '00', 'Plumbing(PS)', 'CLEARED', 'Closed', 'Apartment Building',
+   'Building Permit Related(PS)', 'ALTERATION_OR_REPAIR', 'Plumbing - suite alterations', '2024-01-10', '2024-02-01', '2024-09-30', NULL,
+   '181', 'GERRARD', 'ST', 'E', '{}', 6, 6),
+  (3, '25 100003 NEW', '00', 'New Building', 'ACTIVE', 'Permit Issued', 'Apartment Building',
+   'New Building', 'NEW_CONSTRUCTION', 'Construct a new 30 storey rental building on the site', '2025-05-05', NULL, NULL, 90000000.00,
+   '181-183', 'GERRARD', 'ST', 'E', '{}', 5, 5),
+  (4, '99 100004 DEM', '00', 'Demolition Folder (DM)', 'CLEARED', 'Closed', 'SFD - Detached',
+   'Demolition', 'DEMOLITION', 'Demolish house', '1920-01-01', NULL, '2017-05-01', NULL,
+   '181', 'GERRARD', 'ST', 'E', '{}', 6, 6),
+  (5, '25 100005 BLD', '00', 'Building Additions/Alterations', 'ACTIVE', 'Inspection', 'Apartment Building',
+   'Other(BA)', 'ALTERATION_OR_REPAIR', 'Shared-address permit', '2025-07-07', '2025-08-08', NULL, NULL,
+   '33', 'FLAMBOROUGH', 'DR', '', '{}', 5, 5);
+
+INSERT INTO permit_matches (permit_id, building_id, match_method, match_confidence, site_relation, accepted,
+                            source_address, target_address, import_id) VALUES
+  (1, 1, 'ADDRESS', 'HIGH', 'BUILDING', true, '183 GERRARD ST E', '183 GERRARD ST E', 5),
+  (2, 1, 'ADDRESS', 'HIGH', 'BUILDING', true, '181 GERRARD ST E', '181 GERRARD ST E', 6),
+  (3, 1, 'PERMIT_RANGE', 'MEDIUM', 'BUILDING', true, '181-183 GERRARD ST E', '181 GERRARD ST E', 5),
+  (4, 1, 'ADDRESS', 'MEDIUM', 'OTHER_STRUCTURE_ON_SITE', true, '181 GERRARD ST E', '181 GERRARD ST E', 6),
+  (5, 4, 'ADDRESS', 'LOW', 'BUILDING', false, '33 FLAMBOROUGH DR', '33 FLAMBOROUGH DR', 5),
+  (5, 5, 'ADDRESS', 'LOW', 'BUILDING', false, '33 FLAMBOROUGH DR', '33 FLAMBOROUGH DR', 5);

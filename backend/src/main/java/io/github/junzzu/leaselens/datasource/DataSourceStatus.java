@@ -24,11 +24,13 @@ public record DataSourceStatus(
             @Schema(description = "Whole days since the last successful import; null if never")
             Integer daysSinceSuccessfulImport) {}
 
+    @Schema(name = "DatasetImport")
     public record Import(
             OffsetDateTime importedAt,
             @Schema(description = "The City's last-modified stamp for the file. It says when the portal file "
                     + "changed, not that every record in it is current.") String sourceVersion,
             Integer recordCount) {}
 
+    @Schema(name = "ImportAttempt")
     public record Attempt(OffsetDateTime startedAt, String status) {}
 }

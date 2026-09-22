@@ -26,3 +26,5 @@ pipeline/raw/
 .idea/
 .vscode/
 *.egg-info/
+# Local dev-tool config (machine-specific paths)
+.claude/launch.json

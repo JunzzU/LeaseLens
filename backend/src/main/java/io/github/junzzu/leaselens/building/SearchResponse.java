@@ -27,6 +27,7 @@ public record SearchResponse(
     }
 
     /** Carries enough detail to tell apart buildings that share an address. */
+    @Schema(name = "SearchResult")
     public record Result(
             long buildingId,
             @Schema(description = "RentSafeTO registration number, shown when buildings share an address")

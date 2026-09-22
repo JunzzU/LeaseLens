@@ -32,6 +32,7 @@ public record BuildingSummary(
         List<CoverageNote> coverageNotes,
         List<SourceFreshness> sources) {
 
+    @Schema(name = "BuildingLocation")
     public record Location(double latitude, double longitude) {}
 
     public record EvaluationSummary(

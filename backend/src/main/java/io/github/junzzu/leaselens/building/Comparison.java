@@ -65,6 +65,7 @@ public record Comparison(
     }
 
     /** A {@link PeerRule} spelled out, so clients can state exactly who the building was compared with. */
+    @Schema(name = "ComparisonRule")
     public record Rule(
             PeerRule code,
             boolean sameWard,
@@ -82,10 +83,13 @@ public record Comparison(
     public static final int MINIMUM_PEERS = 15;
     public static final int EVALUATION_WINDOW_DAYS = 730;
 
+    @Schema(name = "ComparisonScore")
     public record Score(int score, LocalDate date) {}
 
+    @Schema(name = "ScoreSpread")
     public record Spread(double median, double lowerQuartile, double upperQuartile, int min, int max) {}
 
+    @Schema(name = "ComparisonPermitActivity")
     public record PermitActivity(
             @Schema(description = "Attached permits applied for in the last 5 years") int building,
             @Schema(description = "Median of the same count across peers; null below minimumPeers") Double peerMedian,

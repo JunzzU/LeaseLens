@@ -2,7 +2,7 @@
 
 Look up a Toronto apartment building before you sign a lease: RentSafeTO evaluation history, building permits, and a unified timeline, built from City of Toronto open data with the source and freshness of every record shown.
 
-**Status:** Week 5 — MVP backend complete: search, building profiles, evaluations, permits, a unified timeline, transparent comparisons with similar buildings, and data-source freshness. Next: the website (Weeks 6–7).
+**Status:** Week 6 — the website runs locally: address search with suggestions, building profiles with coverage notes, and an About the data page. Charts, the permit table, the timeline and comparisons come in Week 7.
 
 Docs: [matching](docs/matching-methodology.md) · [comparison](docs/comparison-methodology.md) · [limitations](docs/limitations.md) · [data quality](docs/data-quality-week4.md) · [Week 1 audit](docs/data-audit.md)
 
@@ -13,7 +13,7 @@ Python ETL · PostgreSQL/PostGIS · Spring Boot API · Next.js frontend
 
 ## Local setup (macOS)
 
-Requires Java 25, Python 3.11+ and **PostgreSQL 18+ with PostGIS** ([Postgres.app](https://postgresapp.com) includes both). PostgreSQL 18 is required because the import uses `MERGE ... RETURNING old.*`.
+Requires Java 25, Python 3.11+, Node 24 and **PostgreSQL 18+ with PostGIS** ([Postgres.app](https://postgresapp.com) includes both). PostgreSQL 18 is required because the import uses `MERGE ... RETURNING old.*`.
 
 ```bash
 createdb leaselens
@@ -33,7 +33,11 @@ pipeline/.venv/bin/pip install -e "pipeline[dev]"
    pipeline/.venv/bin/leaselens-pipeline import all        # RentSafeTO, then permits (~15 s); safe to rerun
    pipeline/.venv/bin/leaselens-pipeline report            # data-quality summary (Markdown)
    ```
-3. **Try it:** http://localhost:8080/swagger-ui.html, or
+3. **Start the website** (in a third terminal):
+   ```bash
+   cd frontend && npm install && npm run dev   # http://localhost:3000
+   ```
+4. **Or try the API directly:** http://localhost:8080/swagger-ui.html, or
    ```bash
    curl "http://localhost:8080/api/v1/buildings/search?q=181+gerrard+st+e"
    ```
@@ -60,6 +64,7 @@ Errors are RFC 9457 problem details. `/api/v1` changes are additive only, becaus
 ```bash
 pipeline/.venv/bin/pytest pipeline     # pipeline: unit + import tests (database leaselens_test)
 cd backend && ./mvnw test             # backend: unit + HTTP tests (database leaselens_api_test)
+cd frontend && npm test && npm run typecheck && npm run lint
 ```
 
 Database tests rebuild their schema from the migrations on every run. Address-normalization cases live in [`testdata/address-normalization-cases.json`](testdata/address-normalization-cases.json), and both the Python and the Java normalizer must pass them.

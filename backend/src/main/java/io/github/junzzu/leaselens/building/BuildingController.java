@@ -42,7 +42,8 @@ public class BuildingController {
             description = "Returns candidates, never a single silent guess. When `ambiguous` is true the client "
                     + "must ask the user to choose. `matchType` says how certain the match is.")
     public SearchResponse search(
-            @Parameter(example = "181 gerrard st e") @RequestParam @NotBlank @Size(max = 100) String q,
+            @Parameter(description = "Address, or part of one, e.g. \"181 gerrard st e\" or \"123 blo\"")
+            @RequestParam @NotBlank @Size(max = 100) String q,
             @RequestParam(required = false) @Min(1) @Max(50) Integer limit) {
         return search.search(q, limit);
     }

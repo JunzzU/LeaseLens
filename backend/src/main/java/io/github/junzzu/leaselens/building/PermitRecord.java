@@ -36,6 +36,7 @@ public record PermitRecord(
 
     public enum WorkCategory { ALTERATION_OR_REPAIR, NEW_CONSTRUCTION, DEMOLITION }
 
+    @Schema(name = "PermitMatch")
     public record Match(
             @Schema(description = "ADDRESS: same civic address; PERMIT_RANGE: the permit's address range covers it")
             String method,
@@ -48,6 +49,7 @@ public record PermitRecord(
             String permitAddress) {}
 
     /** One page of a building's permits plus totals, so clients can show counts without fetching all. */
+    @Schema(name = "PermitPage")
     public record Page(
             int total,
             int activeCount,

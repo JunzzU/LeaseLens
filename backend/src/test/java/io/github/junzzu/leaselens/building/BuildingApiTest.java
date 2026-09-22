@@ -250,6 +250,18 @@ class BuildingApiTest {
     }
 
     @Test
+    void openApiSchemaNamesAreUniqueAndDescriptive() {
+        // Two records both named "Page" once overwrote each other in the generated description.
+        assertThat(mvc.get().uri("/v3/api-docs")).bodyJson()
+                .hasPathSatisfying("$.components.schemas.PermitPage.properties.permits", v -> v.assertThat().isNotNull())
+                .hasPathSatisfying("$.components.schemas.TimelinePage.properties.events", v -> v.assertThat().isNotNull())
+                .hasPathSatisfying("$.components.schemas.SearchResult", v -> v.assertThat().isNotNull())
+                .doesNotHavePath("$.components.schemas.Page")
+                .hasPathSatisfying("$.paths['/api/v1/buildings/{id}/permits'].get.responses['200'].content['*/*'].schema['$ref']",
+                        v -> v.assertThat().isEqualTo("#/components/schemas/PermitPage"));
+    }
+
+    @Test
     void healthCheckIsUp() {
         assertThat(mvc.get().uri("/actuator/health")).hasStatusOk().bodyJson()
                 .hasPathSatisfying("$.status", v -> v.assertThat().isEqualTo("UP"));

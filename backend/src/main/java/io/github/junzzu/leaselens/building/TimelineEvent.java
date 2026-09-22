@@ -33,8 +33,10 @@ public record TimelineEvent(
 
     public enum DatePrecision { DAY, MONTH }
 
+    @Schema(name = "TimelineEvaluation")
     public record Evaluation(Integer score, ScoringVersion scoringVersion) {}
 
+    @Schema(name = "TimelinePermit")
     public record Permit(
             String permitNumber,
             String permitType,
@@ -45,5 +47,6 @@ public record TimelineEvent(
             String description,
             boolean predatesBuilding) {}
 
+    @Schema(name = "TimelinePage")
     public record Page(int total, int limit, int offset, List<TimelineEvent> events) {}
 }

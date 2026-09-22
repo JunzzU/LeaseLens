@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens. Scores and permits are never colour-coded good/bad: the accent marks
+ * interaction, and "note" marks caveats the reader should know, not alarms.
+ */
+:root {
+  --paper: #f7f5f0;
+  --card: #ffffff;
+  --ink: #1b2430;
+  --muted: #5b6675;
+  --line: #e3dfd6;
+  --accent: #0f5e5c;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3efee;
+  --note: #fbf4e2;
+  --note-ink: #6b4f12;
+  --note-line: #ecdcb0;
+  --focus: #1d6fd6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #13171c;
+    --card: #1b2027;
+    --ink: #e8eaed;
+    --muted: #a2abb7;
+    --line: #2d343d;
+    --accent: #5fbfb9;
+    --accent-ink: #0b1a19;
+    --accent-soft: #1d3432;
+    --note: #2a2517;
+    --note-ink: #ecd9a4;
+    --note-line: #4a3f22;
+    --focus: #7fb2ff;
+  }
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-note: var(--note);
+  --color-note-ink: var(--note-ink);
+  --color-note-line: var(--note-line);
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-serif: var(--font-source-serif), Georgia, serif;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
